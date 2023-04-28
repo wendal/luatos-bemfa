@@ -14,8 +14,11 @@ local bemfa_mqtt = {}
 @return bool 成功返回true, 否则返回nil
 ]]
 function bemfa_mqtt.setup(uid)
+    if uid == nil then
+        uid = _G.BEMFA_UID -- 取全局变量
+    end
     if uid == nil or type(uid) ~= "string" or #uid < 10 then
-        log.error("bemfa", "非法的用户密码,必须是字符串,请到巴法云的用户界面获取")
+        log.error("bemfa", "非法的用户密钥,必须是字符串,请到巴法云的控制台获取")
         return
     end
     if bemfa_mqtt.mqttc ~= nil then
@@ -26,10 +29,10 @@ function bemfa_mqtt.setup(uid)
         log.error("bemfa", "当前固件未包含mqtt库")
         return
     end
-    bemfa_mqtt.uid = uid
+    -- bemfa_mqtt.uid = uid
     bemfa_mqtt.mqttc = mqtt.create(nil, "bemfa.com", 9501)
     bemfa_mqtt.mqttc:auth(uid, "luatos", "123")
-    mqttc:autoreconn(true, 3000)
+    bemfa_mqtt.mqttc:autoreconn(true, 3000)
     sys.taskInit(bemfa_mqtt.task)
     return true
 end
@@ -85,7 +88,9 @@ function bemfa_mqtt.publish(topic, data, qos, retain)
     if type(data) == "table" then
         data = json.encode(data)
     end
-    qos = qos == nil and 1 or qos
+    if qos == nil then
+        qos = 1
+    end
     bemfa_mqtt.mqttc:publish(topic, data, qos ,retain)
     return true
 end
